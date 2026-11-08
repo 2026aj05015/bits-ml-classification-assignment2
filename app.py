@@ -55,7 +55,7 @@ for col,val,label in [(a,'569','Total instances'),(b,'30','Numerical features'),
     with col:
         st.markdown(f'<div class="info-card"><b>{val}</b><span>{label}</span></div>',unsafe_allow_html=True)
 st.caption('Binary target: 0 = benign, 1 = malignant (remapped for this experiment). Stratified random split, random_state=42; held-out test set = 114 records.')
-# Provide optional methodological details without crowding the main dashboard.
+# Display methodological details permanently so they are visible without clicking.
 st.markdown('### About the experiment and evaluation methodology')
 with st.container(border=True):
     st.write('**Objective:** Compare five classifiers using the same 30 numerical features extracted from cell-nucleus images.')
@@ -110,17 +110,6 @@ def evaluate_all_models(dataset):
         details[model_name] = {'predictions': predicted, 'scores': scores}
     return pd.DataFrame(records), details, targets
 
-# Display the initial comparison using the bundled held-out test set.
-st.markdown('<div class="section-head">Model performance comparison</div><div class="section-sub">Metrics calculated from predictions on the bundled held-out test dataset.</div>', unsafe_allow_html=True)
-try:
-    benchmark_data = pd.read_csv(BASE / 'test_data.csv')
-    benchmark_comparison, _, _ = evaluate_all_models(benchmark_data)
-    st.dataframe(benchmark_comparison.style.format({m: '{:.4f}' for m in METRICS}).background_gradient(subset=['Accuracy', 'F1', 'MCC'], cmap='Blues'), use_container_width=True, hide_index=True)
-    st.markdown('**All six metrics across five classifiers**')
-    st.bar_chart(benchmark_comparison.set_index('Model')[METRICS], horizontal=True)
-except Exception as exc:
-    st.error(f'Could not calculate the bundled test-set comparison: {exc}')
-
 # The uploader evaluates all five models, while a single selector controls detailed results.
 st.markdown('<div class="section-head">Evaluate uploaded test CSV</div><div class="section-sub">Upload a labeled CSV and select a classifier to inspect its evaluation results.</div>', unsafe_allow_html=True)
 upload = st.file_uploader('Upload labeled test CSV', type=['csv'], help='Include the original 30 feature columns and target column.')
@@ -136,7 +125,11 @@ else:
         uploaded_data = pd.read_csv(upload)
         uploaded_comparison, model_details, actual_targets = evaluate_all_models(uploaded_data)
         st.success(f'Evaluated {len(uploaded_data)} rows with all five saved models.')
-        st.dataframe(uploaded_comparison.style.format({m: '{:.4f}' for m in METRICS}), use_container_width=True, hide_index=True)
+        # Show the comparison only after the user uploads a valid labeled test CSV.
+        st.markdown('<div class="section-head">Model performance comparison</div><div class="section-sub">All metrics below are calculated from predictions on your uploaded CSV.</div>', unsafe_allow_html=True)
+        st.dataframe(uploaded_comparison.style.format({m: '{:.4f}' for m in METRICS}).background_gradient(subset=['Accuracy', 'F1', 'MCC'], cmap='Blues'), use_container_width=True, hide_index=True)
+        st.markdown('**All six metrics across five classifiers**')
+        st.bar_chart(uploaded_comparison.set_index('Model')[METRICS], horizontal=True)
         # Select one trained classifier to inspect; the comparison table still includes all five.
         model_name = st.selectbox('Choose a trained classifier', MODEL_NAMES)
         # Display the selected model's six metrics and diagnostic outputs.
