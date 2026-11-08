@@ -54,7 +54,6 @@ All five classifiers were evaluated on the same 114-record test set. Metrics use
 - `requirements.txt` - Python dependencies.
 - `README.md` - project description and results.
 - `test_data.csv` - labeled held-out test data.
-- `model_metrics.csv` - model comparison metrics.
 - `model/` - five `.joblib` classifiers and `feature_columns.json`.
 
 ## Reproduce the experiment
